@@ -1,0 +1,42 @@
+pwd
+ll
+cd RippedCDs/Givan\ Xmas\ 1/
+ll
+~/projects/audprocess/bin/convert_to_flac.sh *.wav
+ll
+rm *.wav
+ll
+files
+ll
+cd .
+cd..
+ll
+cd ..
+ll
+mv Givan\ Xmas\ 1/ ~/Music2/
+dc ~/Music2
+ll
+cd ~/Music2/
+ll
+new
+cd John\ Coltrane/
+ll
+cd My\ Favorite\ Things/
+ll
+ll ~/projects/audprocess/bin
+pwd
+cd ~/projects/audprocess/bin
+ll
+vim convert_flac_to_hq-mp3.pl 
+vim convert_to_mp3.pl 
+ll
+vim convert_flac_to_hq-mp3.pl 
+ll
+vim convert_flac_to_hq-mp3.pl 
+ll
+vim convert_all_flac_to_mp3.sh 
+ll
+vim convert_flac_to_hq-mp3.pl 
+cd projects/audprocess
+cd bin
+ll
