@@ -28,7 +28,7 @@ use Getopt::Long; # use GetOptions function to for CL args
 use warnings;
 use strict;
 
-my ($debug,$verbose,$help,$infile,$b320,$b256,$b128,$sampleRate);
+my ($debug,$verbose,$help,$infile,$b320,$b256,$b128,$sampleRate,$sampleRateInt,$lowerbitrate);
 
 my $result = GetOptions(
     "debug"     =>  \$debug,
@@ -38,6 +38,7 @@ my $result = GetOptions(
     "b320"      =>  \$b320,
     "b256"      =>  \$b256,
     "b128"      =>  \$b128,
+    "lowerbitrate"  =>  \$lowerbitrate,
 );
 
 if ($help) {
@@ -46,12 +47,20 @@ if ($help) {
 }
 
 chomp(my $ffmpeg = `which ffmpeg`);
+chomp(my $ffprobe = `which ffprobe`);
 $sampleRate = "320K";
-$sampleRate = "256K" if ($b256);
-$sampleRate = "128K" if ($b128);
+$sampleRateInt = 320000;
+if ($b256) {
+  $sampleRate = "256K";
+  $sampleRateInt = 256000;
+} elsif ($b128) {
+  $sampleRate = "128K";
+  $sampleRateInt = 128000;
+}
 
 if ($debug) {
     say "ffmpeg: '$ffmpeg'";
+    say "ffprobe:  '$ffprobe'";
 }
 
 my $outfile = $infile;
@@ -66,32 +75,65 @@ sub help {
 
 say <<HELP;
 
-    "debug"     =>  \$debug,
-    "verbose"   =>  \$verbose,
-    "help"      =>  \$help,
-    "infile:s"  =>  \$infile,
-    "b320"      =>  \$b320,
-    "b256"      =>  \$b256,
+    --debug
+    --verbose
+    --help
+    --infile:s
+    --b320
+    --b256
+    --b128
+    --lowerbitrate
 
 HELP
 
 }
 
+my ($infile_esc, $outfile_esc) = ();
 if (1) {
-  say "file: //$infile//";
+  say "file: //$infile//" if ($debug);
   my $escaped = $infile;
   $escaped =~ s/\\//g;
   $escaped =~ s/(\W)/\\$1/g;
-  say "escaped: '$escaped'";
-  $infile = $escaped;
+  say "escaped: '$escaped'" if ($debug);
+  $infile_esc = $escaped;
   $escaped = $outfile;
   $escaped =~ s/\\//g;
   $escaped =~ s/(\W)/\\$1/g;
-  $outfile = $escaped;
+  $outfile_esc = $escaped;
 }
-#open(my $FFMPEG, "|-", "$ffmpeg -i \"$infile\" -c:a aac -strict -1 -b:a $sampleRate -osr 44.1K \"$outfile\"");
-#open(my $FFMPEG, "|-", "$ffmpeg -hide_banner -i \'$infile\' -b:a $sampleRate -osr 44.1K \'$outfile\'");
-open(my $FFMPEG, "|-", "$ffmpeg -hide_banner -i $infile -b:a $sampleRate -osr 44.1K $outfile");
+
+if ($debug) {
+  say "escaped file paths:";
+  say "infile: '$infile_esc'";
+  say "outfile: '$outfile_esc'";
+}
+
+my $curr_bitrate = 0;
+print "\n\nchecking output file '$outfile'\n\n" if ($debug);
+if (-e $outfile) {
+  #
+  #ffprobe -i out.mp3 -v quiet -show_entries stream=bit_rate -of default=noprint_wrappers=1
+  if ($debug) {
+    say "output file exists";
+    say "running command: '$ffprobe -i $outfile_esc -v quiet -show_entries stream=bit_rate -of default=noprint_wrappers=1'";
+  }
+
+  open(my $FFPROBE, "-|", "$ffprobe -i $outfile_esc -v quiet -show_entries stream=bit_rate -of default=noprint_wrappers=1");
+  my $stdout = <$FFPROBE>;
+  close($FFPROBE);
+  say "stdout: '$stdout'" if ($debug);
+  if ($stdout =~ /bit_rate=(\d+)/) {
+    $curr_bitrate = $1;
+  }
+  if ($debug) {
+    say "$outfile current bit rate: '$curr_bitrate'";
+  }
+}
+if ($lowerbitrate && $curr_bitrate && $curr_bitrate <= $sampleRateInt) {
+  say "not converting file since current bit rate ($curr_bitrate) is <= $sampleRateInt" if ($verbose);
+  exit(0);
+}
+open(my $FFMPEG, "-|", "$ffmpeg -y -hide_banner -i $infile_esc -b:a $sampleRate -osr 44.1K $outfile_esc");
 
 my @stdout = <$FFMPEG>;
 
