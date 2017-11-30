@@ -28,7 +28,7 @@ use Getopt::Long; # use GetOptions function to for CL args
 use warnings;
 use strict;
 
-my ($debug,$verbose,$help,$infile,$b320,$b256,$sampleRate);
+my ($debug,$verbose,$help,$infile,$b320,$b256,$b128,$sampleRate);
 
 my $result = GetOptions(
     "debug"     =>  \$debug,
@@ -37,6 +37,7 @@ my $result = GetOptions(
     "infile:s"  =>  \$infile,
     "b320"      =>  \$b320,
     "b256"      =>  \$b256,
+    "b128"      =>  \$b128,
 );
 
 if ($help) {
@@ -47,6 +48,7 @@ if ($help) {
 chomp(my $ffmpeg = `which ffmpeg`);
 $sampleRate = "320K";
 $sampleRate = "256K" if ($b256);
+$sampleRate = "128K" if ($b128);
 
 if ($debug) {
     say "ffmpeg: '$ffmpeg'";
