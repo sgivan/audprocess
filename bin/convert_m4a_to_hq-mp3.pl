@@ -89,6 +89,7 @@ HELP
 }
 
 my ($infile_esc, $outfile_esc) = ();
+open (my $FAIL, ">>", "fails.txt") or die ("can't open fails.txt");
 if (1) {
   say "file: //$infile//" if ($debug);
   my $escaped = $infile;
@@ -120,7 +121,14 @@ if (-e $outfile) {
 
   open(my $FFPROBE, "-|", "$ffprobe -i $outfile_esc -v quiet -show_entries stream=bit_rate -of default=noprint_wrappers=1");
   my $stdout = <$FFPROBE>;
-  close($FFPROBE);
+  #close($FFPROBE);
+  eval { close($FFPROBE) };
+  if ($@) {
+    warn "Error closing ffprobe: $@";
+    print $FAIL "Error closing ffprobe: $@.";
+    print $FAIL "$ffprobe -i $outfile_esc -v quiet -show_entries stream=bit_rate -of default=noprint_wrappers=1\n\n";
+  }
+  
   say "stdout: '$stdout'" if ($debug);
   if ($stdout =~ /bit_rate=(\d+)/) {
     $curr_bitrate = $1;
@@ -137,6 +145,11 @@ open(my $FFMPEG, "-|", "$ffmpeg -y -hide_banner -i $infile_esc -b:a $sampleRate 
 
 my @stdout = <$FFMPEG>;
 
-close($FFMPEG);
+eval { close($FFMPEG) };
+if ($@) {
+  warn "Error closing ffprobe: $@";
+  print $FAIL "Error closing ffprobe: $@.";
+  print $FAIL "$ffmpeg -y -hide_banner -i $infile_esc -b:a $sampleRate -osr 44.1K $outfile_esc";
+}
 
 say @stdout if ($verbose);
