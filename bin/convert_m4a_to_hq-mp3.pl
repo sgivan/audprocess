@@ -141,7 +141,7 @@ if ($lowerbitrate && $curr_bitrate && $curr_bitrate <= $sampleRateInt) {
   say "not converting file since current bit rate ($curr_bitrate) is <= $sampleRateInt" if ($verbose);
   exit(0);
 }
-open(my $FFMPEG, "-|", "$ffmpeg -y -hide_banner -i $infile_esc -b:a $sampleRate -osr 44.1K $outfile_esc");
+open(my $FFMPEG, "-|", "$ffmpeg -y -hide_banner -i $infile_esc -b:a $sampleRate -osr 44.1K -vn $outfile_esc");
 
 my @stdout = <$FFMPEG>;
 
